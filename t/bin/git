@@ -1,0 +1,9 @@
+#!/usr/bin/env perl
+
+# This has to work with olde perls
+
+my $filename = shift @ARGV;
+open FH, ">>$filename" or die "open($filename): $!";
+print FH join '|', @ARGV;
+print FH "\n";
+close FH;

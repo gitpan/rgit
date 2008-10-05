@@ -1,0 +1,148 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use Carp qw/croak/;
+use Cwd qw/cwd/;
+use File::Spec::Functions qw/catfile path/;
+use List::Util qw/first/;
+
+use App::Rgit;
+
+our $VERSION = '0.01';
+
+my $cmd = first { !/^-/ } @ARGV;
+$cmd = ' ' unless defined $cmd;
+
+my $git = $ENV{GIT_EXEC_PATH};
+unless (defined $git) {
+ for (path) {
+  my $g = catfile $_, 'git';
+  if (-x $g) {
+   $git = $g;
+   last;
+  }
+ }
+}
+croak "Couldn't find any valid git executable" unless defined $git;
+
+my $root = $ENV{GIT_DIR};
+$root = cwd unless defined $root;
+
+exit App::Rgit->new(
+ git  => $git,
+ root => $root,
+ cmd  => $cmd,
+ args => \@ARGV
+)->run;
+
+__END__
+
+=head1 NAME
+
+rgit - Recursively execute a command on all the git repositories in a directory tree.
+
+=head1 VERSION
+
+Version 0.01
+
+=head1 SYNOPSIS
+
+    rgit [GIT_OPTIONS] COMMAND [COMMAND_ARGS]
+
+=head1 DESCRIPTION
+
+This utility recursively searches in the current directory (or in the directory given by the C<GIT_DIR> environment variable if it's set) for all git repositories, C<chdir> into each of them, and executes the specified git command.
+Moreover, those formats are substuted in the arguments before running the command :
+
+=over 4
+
+=item *
+
+C<^n> with the current repository name.
+
+=item *
+
+C<^g> with the relative path to the current repository.
+
+=item *
+
+C<^G> with the absolute path to the current repository.
+
+=item *
+
+C<^w> with the relative path to the current repository's working directory.
+
+=item *
+
+C<^W> with the absolute path to the current repository's working directory.
+
+=item *
+
+C<^b> with a "bareified" relative path, i.e. C<^g> if this is a bare repository, and C<^w.git> otherwise.
+
+=item *
+
+C<^B> is the absolute version of the "bareified" path.
+
+=item *
+
+C<^R> with the absolute path to the current root directory.
+
+=item *
+
+C<^^> with a bare C<^>.
+
+=back
+
+There are actually a few commands that are only executed once in the current directory : C<version>, C<help>, C<daemon> and C<init>.
+For any of those, no format substitution is done.
+
+You can specify which C<git> executable to use with the C<GIT_EXEC_PATH> environment variable.
+
+=head1 EXAMPLES
+
+Execute C<git gc> on all the repositories below the current directory :
+
+    rgit gc
+
+Tag all the repositories with their name :
+
+    rgit tag ^n
+
+Add a remote to all repositories in "/foo/bar" to their bare counterpart in C<qux> on F<host> :
+
+    GIT_DIR="/foo/bar" rgit remote add host git://host/qux/^b
+
+=head1 DEPENDENCIES
+
+The core modules L<Carp>, L<Cwd>, L<Exporter>, L<File::Find>, L<File::Spec::Functions> and L<List::Util>.
+
+L<Object::Tiny>.
+
+=head1 AUTHOR
+
+Vincent Pit, C<< <perl at profvince.com> >>, L<http://profvince.com>.
+   
+You can contact me by mail or on C<irc.perl.org> (vincent).
+
+=head1 BUGS
+
+Please report any bugs or feature requests to C<bug-rgit at rt.cpan.org>, or through the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=rgit>.  I will be notified, and then you'll automatically be notified of progress on your bug as I make changes.
+
+=head1 SUPPORT
+
+You can find documentation for this module with the perldoc command.
+
+    perldoc rgit
+
+Tests code coverage report is available at L<http://www.profvince.com/perl/cover/rgit>.
+
+=head1 COPYRIGHT & LICENSE
+
+Copyright 2008 Vincent Pit, all rights reserved.
+
+This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
+=cut
