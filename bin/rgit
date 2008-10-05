@@ -10,7 +10,7 @@ use List::Util qw/first/;
 
 use App::Rgit;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 my $cmd = first { !/^-/ } @ARGV;
 $cmd = ' ' unless defined $cmd;
@@ -45,7 +45,7 @@ rgit - Recursively execute a command on all the git repositories in a directory 
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
 =head1 SYNOPSIS
 

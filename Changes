@@ -1,4 +1,9 @@
 Revision history for rgit
 
+0.02    2008-10-05 22:40 UTC
+        + Fix : Missing $VERSION in App::Rgit::Config.
+        + Tst : Don't bundle fake repositories, but create them on the fly.
+        + Tst : Improve coverage up to 97%.
+
 0.01    2008-10-05 15:45 UTC
         First version, released on an unsuspecting world.

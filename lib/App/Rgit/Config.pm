@@ -4,6 +4,8 @@ use strict;
 use warnings;
 
 use Carp qw/croak/;
+use Cwd qw/abs_path/;
+use File::Spec::Functions qw/file_name_is_absolute/;
 
 use Object::Tiny qw/root git/;
 
@@ -15,7 +17,11 @@ App::Rgit::Config - Base class for App::Rgit configurations.
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
+
+=cut
+
+our $VERSION = '0.02';
 
 =head1 DESCRIPTION
 
@@ -33,6 +39,10 @@ Creates a new configuration object based on the root directory C<$root> and usin
 
 sub new {
  my ($class, %args) = &validate;
+ my $root = $args{root};
+ return unless defined $root and -d $root;
+ $root = abs_path $root unless file_name_is_absolute $root;
+ return unless defined $args{git} and -x $args{git};
  my $conf = 'App::Rgit::Config::Default';
  eval "require $conf; 1" or croak "Couldn't load $conf: $@";
  $conf->SUPER::new(

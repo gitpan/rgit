@@ -21,19 +21,4 @@ t/92-pod-coverage.t
 t/95-portability-files.t
 t/99-kwalitee.t
 t/bin/git
-t/repos/01/a/.git/HEAD
-t/repos/01/a/.git/objects/dummy
-t/repos/01/a/.git/refs/dummy
-t/repos/01/x/.git/refs/dummy
-t/repos/02/b.git/HEAD
-t/repos/02/b.git/objects/dummy
-t/repos/02/b.git/refs/dummy
-t/repos/02/x.git/refs/dummy
-t/repos/02/x.git/objects/dummy
-t/repos/03/x/c/.git/HEAD
-t/repos/03/x/c/.git/objects/dummy
-t/repos/03/x/c/.git/refs/dummy
-t/repos/03/y/d.git/HEAD
-t/repos/03/y/d.git/objects/dummy
-t/repos/03/y/d.git/refs/dummy
 META.yml                                 Module meta-data (added by MakeMaker)

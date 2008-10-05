@@ -18,7 +18,7 @@ for (qw/version help daemon init/) {
  my ($fh, $filename) = tempfile(UNLINK => 1);
  my $exit = App::Rgit->new(
   git  => abs_path('t/bin/git'),
-  root => 't/repos',
+  root => 't',
   cmd  => $_,
   args => [ abs_path($filename), $_, qw/^n ^g ^w ^b ^^/ ]
  )->run;

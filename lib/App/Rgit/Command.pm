@@ -16,11 +16,11 @@ App::Rgit::Command - Base class for App::Rgit commands.
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 DESCRIPTION
 
@@ -42,19 +42,21 @@ __PACKAGE__->action($_ => 'Once') for qw/version help daemon init/, ' ';
 sub new {
  my ($class, %args) = &validate;
  my $cmd = $args{cmd};
- return unless defined $cmd;
+ $cmd = ' ' unless defined $cmd;
  my $action = $class->action($cmd);
- croak "Command $cmd shouldn't be executed as an $action"
-                           unless $class eq __PACKAGE__ or $class->isa($action);
- my @repos = grep $_->isa('App::Rgit::Repository'),
-              ref $args{repos} eq 'ARRAY' ? @{$args{repos}} : $args{repos};
+ if ($class eq __PACKAGE__) {
+  $class = $action;
+ } else {
+  croak "Command $cmd should be executed as a $action"
+                               unless $class->isa($action);
+ }
  eval "require $action; 1" or croak "Couldn't load $action: $@";
  my $r = App::Rgit::Repository->new(fake => 1);
  return unless defined $r;
- $action->SUPER::new(
+ $class->SUPER::new(
   cmd         => $cmd,
   args        => $args{args} || [ ],
-  repos       => \@repos,
+  repos       => $args{repos},
   cwd_as_repo => $r,
  );
 }
@@ -68,9 +70,10 @@ Otherwise, returns the current class for C<$cmd>.
 
 sub action {
  my ($self, $cmd, $pkg) = @_;
- $cmd = $self->cmd if !defined $cmd
-                   and defined $self and $self->isa(__PACKAGE__);
- return unless defined $cmd;
+ if (not defined $cmd) {
+  return unless defined $self and ref $self and $self->isa(__PACKAGE__);
+  $cmd = $self->cmd;
+ }
  unless (defined $pkg) {
   return __PACKAGE__ . '::Each' unless defined $commands{$cmd};
   return $commands{$cmd}

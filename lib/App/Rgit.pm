@@ -3,9 +3,6 @@ package App::Rgit;
 use strict;
 use warnings;
 
-use Cwd qw/abs_path/;
-use File::Spec::Functions qw/file_name_is_absolute/;
-
 use Object::Tiny qw/config command/;
 
 use App::Rgit::Command;
@@ -18,11 +15,11 @@ App::Rgit - Backend that supports the rgit utility.
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 DESCRIPTION
 
@@ -40,18 +37,15 @@ Creates a new L<App::Rgit> object that's bound to execute the command C<$cmd> on
 
 sub new {
  my ($class, %args) = &validate;
- my $root = $args{root};
- return unless defined $root and -d $root;
- $root = abs_path $root unless file_name_is_absolute $root;
- return unless defined $args{git} and -x $args{git};
  my $config = App::Rgit::Config->new(
-  root => $root,
+  root => $args{root},
   git  => $args{git},
  );
+ return unless defined $config;
  $class->SUPER::new(
   config  => $config,
   command => App::Rgit::Command->new(
-   cmd   => $args{cmd} || ' ',
+   cmd   => $args{cmd},
    args  => $args{args},
    repos => $config->repos,
   )
