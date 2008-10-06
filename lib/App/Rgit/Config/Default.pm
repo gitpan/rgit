@@ -15,11 +15,11 @@ App::Rgit::Config::Default - Default App::Rgit configuration class.
 
 =head1 VERSION
 
-Version 0.02
+Version 0.03
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 =head1 DESCRIPTION
 
@@ -44,14 +44,13 @@ sub repos {
  find {
   wanted => sub {
    return unless -d $_;
-   return if $_ eq '.' or $_ eq '..';
    my $r = App::Rgit::Repository->new(dir => $File::Find::name);
    $repos{$r->repo} = $r if $r 
                          and not exists $repos{$r->repo};
   },
   follow => 1
  }, $self->root;
- $self->{repos} = [ values %repos ];
+ $self->{repos} = [ sort { $a->repo cmp $b->repo } values %repos ];
 }
 
 =head1 SEE ALSO

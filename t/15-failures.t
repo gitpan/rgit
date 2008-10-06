@@ -3,7 +3,10 @@
 use strict;
 use warnings;
 
-use Test::More tests => 38;
+use Cwd qw/cwd/;
+use File::Spec::Functions qw/catdir/;
+
+use Test::More tests => 45;
 
 use App::Rgit;
 
@@ -86,6 +89,9 @@ $res = eval { App::Rgit::Command->action('beer') };
 is($@, '', 'App::Rgit::Command->action("beer"): does not croak');
 is($res, 'App::Rgit::Test::Pub', 'App::Rgit::Command->action("beer"): returns valid answer');
 
+$res = eval { App::Rgit::Command->new(cmd => 'beer') };
+like($@, qr!Couldn't\s+load\s+App::Rgit::Test::Pub\s*:!, 'App::Rgit::Command->new(cmd => "pub"): croaks');
+
 use App::Rgit::Config;
 
 my $arc = App::Rgit::Config->new(root => 't', git => 't/bin/git');
@@ -97,3 +103,24 @@ is_deeply($res, [ ], '$arc->repos: found nothing');
 $res = eval { $arc->repos };
 is($@, '', '$arc->repos: does not croak');
 is_deeply($res, [ ], '$arc->repos: cached ok');
+
+use App::Rgit::Repository;
+
+my $cwd = cwd;
+my $t = catdir($cwd, 't');
+chdir $t or die "chdir($t): $!";
+
+$res = eval { App::Rgit::Repository->new() };
+is($@, '', 'App::Rgit::Repository->new: no dir: does not croak');
+is($res, undef, 'App::Rgit::Repository->new: no dir: returns undef');
+
+$res = eval { App::Rgit::Repository->new(fake => 1) };
+is($@, '', 'App::Rgit::Repository->new: no dir, fake: does not croak');
+isa_ok($res, 'App::Rgit::Repository', 'App::Rgit::Repository->new: no dir, fake: returns a valid object');
+
+chdir $cwd or die "chdir($cwd): $!";
+
+$res = eval { App::Rgit::Repository->new(dir => 't', fake => 1) };
+is($@, '', 'App::Rgit::Repository->new: relative dir, fake: does not croak');
+isa_ok($res, 'App::Rgit::Repository', 'App::Rgit::Repository->new: relative dir, fake: returns a valid object');
+

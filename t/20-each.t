@@ -7,7 +7,7 @@ use Cwd qw/cwd abs_path/;
 use File::Spec::Functions qw/catdir catfile/;
 use File::Temp qw/tempfile tempdir/;
 
-use Test::More tests => 2 + 3 * 1;
+use Test::More tests => 2 + 3 * 2;
 
 use App::Rgit;
 
@@ -50,7 +50,7 @@ sub repo {
 my $tmpdir = tempdir(CLEANUP => 1);
 my $cwd = cwd;
 chdir $tmpdir or die "chdir($tmpdir): $!";
-my @expected = sort { $a->[0] cmp $b->[0] } build({
+my @expected = sort { $a->[1] cmp $b->[1] } build({
  x => {
   a => {
    _ => repo('a', 0),
@@ -91,7 +91,7 @@ is(grep({ ref eq 'ARRAY' } @expected), 3, 'all of them are array references');
              '^n'
             ], @expected;
 
-for my $cmd (qw/commit/) {
+for my $cmd (qw/commit FAIL/) {
  my ($fh, $filename) = tempfile(UNLINK => 1);
  my $ar = App::Rgit->new(
   git  => abs_path('t/bin/git'),
@@ -101,9 +101,10 @@ for my $cmd (qw/commit/) {
  );
  isnt($ar, undef, "each $cmd has a defined object");
  my $exit = $ar->run;
- is($exit, 0, "each $cmd returned 0");
- my @lines = sort split /\n/, do { local $/; <$fh> };
+ my $fail = $cmd eq 'FAIL' ? 1 : 0;
+ is($exit, $fail << 8, "each $cmd returned $fail");
+ my @lines = split /\n/, do { local $/; <$fh> };
  my $res = [ map [ split /\|/, $_ ], @lines ];
- my $exp = [ map [ $cmd, @$_ ], @expected ];
+ my $exp = [ map [ $cmd, @$_ ], $fail ? $expected[0] : @expected ];
  is_deeply($res, $exp, "each $cmd did the right thing");
 }

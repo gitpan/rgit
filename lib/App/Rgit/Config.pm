@@ -7,8 +7,9 @@ use Carp qw/croak/;
 use Cwd qw/abs_path/;
 use File::Spec::Functions qw/file_name_is_absolute/;
 
-use Object::Tiny qw/root git/;
+use Object::Tiny qw/root git cwd_repo/;
 
+use App::Rgit::Repository;
 use App::Rgit::Utils qw/validate/;
 
 =head1 NAME
@@ -17,11 +18,11 @@ App::Rgit::Config - Base class for App::Rgit configurations.
 
 =head1 VERSION
 
-Version 0.02
+Version 0.03
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 =head1 DESCRIPTION
 
@@ -45,9 +46,12 @@ sub new {
  return unless defined $args{git} and -x $args{git};
  my $conf = 'App::Rgit::Config::Default';
  eval "require $conf; 1" or croak "Couldn't load $conf: $@";
+ my $r = App::Rgit::Repository->new(fake => 1);
+ return unless defined $r;
  $conf->SUPER::new(
-  root => $args{root},
-  git  => $args{git},
+  root     => $root,
+  git      => $args{git},
+  cwd_repo => $r,
  );
 }
 
@@ -56,6 +60,8 @@ sub new {
 =head2 C<git>
 
 =head2 C<repos>
+
+=head2 C<cwd_repo>
 
 Accessors.
 

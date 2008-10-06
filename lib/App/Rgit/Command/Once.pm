@@ -11,11 +11,11 @@ App::Rgit::Command::Once - Class for commands to execute only once.
 
 =head1 VERSION
 
-Version 0.02
+Version 0.03
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 =head1 DESCRIPTION
 
@@ -35,7 +35,7 @@ It implements :
 
 sub run {
  my ($self, $conf) = @_;
- $self->cwd_as_repo->run($conf, @{$self->args});
+ $conf->cwd_repo->run($conf, @{$self->args});
 }
 
 =head1 SEE ALSO

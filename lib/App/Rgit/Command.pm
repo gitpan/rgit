@@ -5,10 +5,9 @@ use warnings;
 
 use Carp qw/croak/;
 
-use Object::Tiny qw/cmd cwd_as_repo args repos/;
+use Object::Tiny qw/cmd args/;
 
 use App::Rgit::Utils qw/validate/;
-use App::Rgit::Repository;
 
 =head1 NAME
 
@@ -16,11 +15,11 @@ App::Rgit::Command - Base class for App::Rgit commands.
 
 =head1 VERSION
 
-Version 0.02
+Version 0.03
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 =head1 DESCRIPTION
 
@@ -30,9 +29,9 @@ This is an internal class to L<rgit>.
 
 =head1 METHODS
 
-=head2 C<< new cmd => $cmd, args => \@args, repos => \@repos >>
+=head2 C<< new cmd => $cmd, args => \@args >>
 
-Creates a new command object for C<$cmd> that will called for all repositories C<@repos> with arguments C<@args>.
+Creates a new command object for C<$cmd> that is bound to be called with arguments C<@args>.
 
 =cut
 
@@ -51,13 +50,9 @@ sub new {
                                unless $class->isa($action);
  }
  eval "require $action; 1" or croak "Couldn't load $action: $@";
- my $r = App::Rgit::Repository->new(fake => 1);
- return unless defined $r;
  $class->SUPER::new(
-  cmd         => $cmd,
-  args        => $args{args} || [ ],
-  repos       => $args{repos},
-  cwd_as_repo => $r,
+  cmd  => $cmd,
+  args => $args{args} || [ ],
  );
 }
 
@@ -84,11 +79,7 @@ sub action {
 
 =head2 C<cmd>
 
-=head2 C<cwd_as_repo>
-
 =head2 C<args>
-
-=head2 C<repos>
 
 Accessors.
 

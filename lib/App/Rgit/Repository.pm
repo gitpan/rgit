@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Cwd qw/cwd abs_path/;
-use File::Spec::Functions qw/catdir splitdir abs2rel/;
+use File::Spec::Functions qw/catdir splitdir abs2rel file_name_is_absolute/;
 
 use Object::Tiny qw/fake repo bare name work/;
 
@@ -16,11 +16,11 @@ App::Rgit::Repository - Class representing a Git repository.
 
 =head1 VERSION
 
-Version 0.02
+Version 0.03
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 =head1 DESCRIPTION
 
@@ -40,15 +40,17 @@ If the C<fake> option is passed, C<$dir> isn't checked to be a valid C<git> repo
 sub new {
  my ($class, %args) = &validate;
  my $dir = $args{dir};
- $dir = abs_path $dir if defined $dir;
+ $dir = abs_path $dir if defined $dir and not file_name_is_absolute $dir;
  $dir = cwd       unless defined $dir;
  my ($repo, $bare, $name, $work);
  if ($args{fake}) {
-  $repo = $dir;
+  $work = $dir;
  } else { 
   my @tries = ($dir);
-  push @tries, "$dir.git" unless $dir =~ /\.git$/;
-  push @tries, catdir($dir, '.git') unless $dir eq '.git';
+  my @chunks = splitdir $dir;
+  my $last = pop @chunks;
+  push @tries, "$dir.git" unless $last =~ /\.git$/;
+  push @tries, catdir($dir, '.git') unless $last eq '.git';
   for (@tries) {
    if (-d $_ && -d "$_/refs" and -d "$_/objects" and -e "$_/HEAD") {
     $repo = $_;
@@ -56,12 +58,12 @@ sub new {
    }
   }
   return unless defined $repo;
-  my @chunks = splitdir($repo);
-  my $last = pop @chunks;
+  @chunks = splitdir $repo;
+  $last = pop @chunks;
   if ($last eq '.git') {
    $bare = 0;
    $name = $chunks[-1];
-   $work = catdir(@chunks);
+   $work = catdir @chunks;
   } else {
    $bare = 1;
    ($name) = $last =~ /(.*)\.git$/;
@@ -85,9 +87,9 @@ C<chdir> into the repository's directory.
 
 sub chdir {
  my $self = shift;
- my $repo = $self->repo;
- chdir $repo or do {
-  warn "Couldn't chdir into $repo: $!";
+ my $dir = $self->work;
+ chdir $dir or do {
+  warn "Couldn't chdir into $dir: $!";
   return;
  };
  return 1;

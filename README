@@ -3,7 +3,7 @@ NAME
     directory tree.
 
 VERSION
-    Version 0.02
+    Version 0.03
 
 SYNOPSIS
         rgit [GIT_OPTIONS] COMMAND [COMMAND_ARGS]
@@ -11,9 +11,10 @@ SYNOPSIS
 DESCRIPTION
     This utility recursively searches in the current directory (or in the
     directory given by the "GIT_DIR" environment variable if it's set) for
-    all git repositories, "chdir" into each of them, and executes the
-    specified git command. Moreover, those formats are substuted in the
-    arguments before running the command :
+    all git repositories, sort this list by the repository path, "chdir"
+    into each of them, and executes the specified git command. Moreover,
+    those formats are substuted in the arguments before running the command
+    :
 
     *   "^n" with the current repository name.
 
@@ -30,7 +31,7 @@ DESCRIPTION
     *   "^b" with a "bareified" relative path, i.e. "^g" if this is a bare
         repository, and "^w.git" otherwise.
 
-    *   "^B" is the absolute version of the "bareified" path.
+    *   "^B" with an absolute version of the "bareified" path.
 
     *   "^R" with the absolute path to the current root directory.
 

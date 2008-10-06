@@ -10,7 +10,7 @@ use List::Util qw/first/;
 
 use App::Rgit;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 my $cmd = first { !/^-/ } @ARGV;
 $cmd = ' ' unless defined $cmd;
@@ -45,7 +45,7 @@ rgit - Recursively execute a command on all the git repositories in a directory 
 
 =head1 VERSION
 
-Version 0.02
+Version 0.03
 
 =head1 SYNOPSIS
 
@@ -53,7 +53,7 @@ Version 0.02
 
 =head1 DESCRIPTION
 
-This utility recursively searches in the current directory (or in the directory given by the C<GIT_DIR> environment variable if it's set) for all git repositories, C<chdir> into each of them, and executes the specified git command.
+This utility recursively searches in the current directory (or in the directory given by the C<GIT_DIR> environment variable if it's set) for all git repositories, sort this list by the repository path, C<chdir> into each of them, and executes the specified git command.
 Moreover, those formats are substuted in the arguments before running the command :
 
 =over 4
@@ -84,7 +84,7 @@ C<^b> with a "bareified" relative path, i.e. C<^g> if this is a bare repository,
 
 =item *
 
-C<^B> is the absolute version of the "bareified" path.
+C<^B> with an absolute version of the "bareified" path.
 
 =item *
 

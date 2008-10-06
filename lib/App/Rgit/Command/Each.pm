@@ -11,11 +11,11 @@ App::Rgit::Command::Each - Class for commands to execute for each repository.
 
 =head1 VERSION
 
-Version 0.02
+Version 0.03
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 =head1 DESCRIPTION
 
@@ -35,13 +35,14 @@ It implements :
 
 sub run {
  my $self = shift;
+ my $conf = shift;
  my $status = 0;
- for (@{$self->repos}) {
+ for (@{$conf->repos}) {
   $_->chdir or next;
-  $status = $_->run($_[0], @{$self->args});
+  $status = $_->run($conf, @{$self->args});
   last if $status;
  }
- $self->cwd_as_repo->chdir;
+ $conf->cwd_repo->chdir;
  return $status;
 }
 
