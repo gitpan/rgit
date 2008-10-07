@@ -11,17 +11,32 @@ App::Rgit::Utils - Miscellanous utilities for App::Rgit classes.
 
 =head1 VERSION
 
-Version 0.03
+Version 0.04
 
 =cut
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 =head1 DESCRIPTION
 
 Miscellanous utilities for L<App::Rgit> classes.
 
 This is an internal module to L<rgit>.
+
+=head1 CONSTANTS
+
+=head2 C<NEXT>, C<REDO>, C<LAST>, C<SAVE>
+
+Codes to return from the C<report> callback to respectively proceed to the next repository, retry the current one, end it all, and save the return code.
+
+=cut
+
+use constant {
+ SAVE => 0x1,
+ NEXT => 0x2,
+ REDO => 0x4,
+ LAST => 0x8,
+};
 
 =head1 FUNCTIONS
 
@@ -41,7 +56,9 @@ sub validate {
 
 =head1 EXPORT
 
-C<validate> is only exported on request.
+C<validate> is only exported on request, either by its name or by the C<'funcs'> tag.
+
+C<NEXT> C<REDO>, C<LAST> and C<SAVE> are only exported on request, either by their name or by the C<'codes'> tags.
 
 =cut
 
@@ -49,7 +66,8 @@ use base qw/Exporter/;
 
 our @EXPORT         = ();
 our %EXPORT_TAGS    = (
- funcs => [ qw/validate/ ]
+ funcs => [ qw/validate/ ],
+ codes => [ qw/SAVE NEXT REDO LAST/ ],
 );
 our @EXPORT_OK      = map { @$_ } values %EXPORT_TAGS;
 $EXPORT_TAGS{'all'} = [ @EXPORT_OK ];

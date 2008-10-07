@@ -5,17 +5,19 @@ use warnings;
 
 use base qw/App::Rgit::Command/;
 
+use App::Rgit::Utils qw/:codes/;
+
 =head1 NAME
 
 App::Rgit::Command::Each - Class for commands to execute for each repository.
 
 =head1 VERSION
 
-Version 0.03
+Version 0.04
 
 =cut
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 =head1 DESCRIPTION
 
@@ -37,13 +39,20 @@ sub run {
  my $self = shift;
  my $conf = shift;
  my $status = 0;
+ my $code;
  for (@{$conf->repos}) {
   $_->chdir or next;
-  $status = $_->run($conf, @{$self->args});
-  last if $status;
+  ($status, my $signal) = $_->run($conf, @{$self->args});
+  $code = $self->report($conf, $_, $status, $signal) unless defined $code;
+  last if $code & LAST;
+  if ($code & REDO) {
+   undef $code; # Don't save it, that would be very dumb
+   redo;
+  }
+  undef $code unless $code & SAVE;
  }
  $conf->cwd_repo->chdir;
- return $status;
+ return wantarray ? ($status, $code) : $status;
 }
 
 =head1 SEE ALSO

@@ -15,11 +15,11 @@ App::Rgit - Backend that supports the rgit utility.
 
 =head1 VERSION
 
-Version 0.03
+Version 0.04
 
 =cut
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 =head1 DESCRIPTION
 
@@ -43,8 +43,9 @@ sub new {
  );
  return unless defined $config;
  my $command = App::Rgit::Command->new(
-  cmd  => $args{cmd},
-  args => $args{args},
+  cmd    => $args{cmd},
+  args   => $args{args},
+  policy => $args{policy},
  );
  return unless defined $command;
  $class->SUPER::new(

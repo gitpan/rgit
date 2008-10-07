@@ -30,12 +30,13 @@ WriteMakefile(
     EXE_FILES     => [ 'bin/rgit' ],
     PREREQ_PM     => {
         'Carp'                  => 0,
+        'Config'                => 0,
         'Cwd'                   => 0,
         'Exporter'              => 0,
         'File::Find'            => 0,
         'File::Spec::Functions' => 0,
-        'List::Util'            => 0,
         'Object::Tiny'          => 0,
+        'POSIX'                 => 0,
     },
     dist          => { 
         PREOP      => 'pod2text bin/rgit > $(DISTVNAME)/README; '

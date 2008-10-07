@@ -3,10 +3,10 @@ NAME
     directory tree.
 
 VERSION
-    Version 0.03
+    Version 0.04
 
 SYNOPSIS
-        rgit [GIT_OPTIONS] COMMAND [COMMAND_ARGS]
+        rgit [-K|-V|-I] [GIT_OPTIONS] COMMAND [COMMAND_ARGS]
 
 DESCRIPTION
     This utility recursively searches in the current directory (or in the
@@ -38,11 +38,31 @@ DESCRIPTION
     *   "^^" with a bare "^".
 
     There are actually a few commands that are only executed once in the
-    current directory : "version", "help", "daemon" and "init". For any of
-    those, no format substitution is done.
+    current directory : "daemon", "gui", "help", "init" and "version". For
+    any of those, no format substitution is done.
 
     You can specify which "git" executable to use with the "GIT_EXEC_PATH"
     environment variable.
+
+COMMAND LINE SWITCHES
+    "rgit" takes its options as the capital switches that comes before the
+    git command. It's possible to bundle them together. They are removed
+    from the argument list before calling "git".
+
+    *   "-K"
+
+        Keep processing on error. The default policy is to stop whenever an
+        error occured.
+
+    *   "-I"
+
+        Enables interactive mode when the standard input is a tty. Requires
+        Term::ReadKey to be installed. This lets you choose interactively
+        what to do when one of the commands returns a non-zero status.
+
+    *   "-V"
+
+        Outputs the version.
 
 EXAMPLES
     Execute "git gc" on all the repositories below the current directory :
@@ -59,8 +79,8 @@ EXAMPLES
         GIT_DIR="/foo/bar" rgit remote add host git://host/qux/^b
 
 DEPENDENCIES
-    The core modules Carp, Cwd, Exporter, File::Find, File::Spec::Functions
-    and List::Util.
+    The core modules Carp, "Config", Cwd, Exporter, File::Find,
+    File::Spec::Functions and POSIX.
 
     Object::Tiny.
 

@@ -5,6 +5,7 @@ use warnings;
 
 use Cwd qw/cwd abs_path/;
 use File::Spec::Functions qw/catdir splitdir abs2rel file_name_is_absolute/;
+use POSIX qw/WIFEXITED WEXITSTATUS WIFSIGNALED WTERMSIG SIGINT SIGQUIT/;
 
 use Object::Tiny qw/fake repo bare name work/;
 
@@ -16,11 +17,11 @@ App::Rgit::Repository - Class representing a Git repository.
 
 =head1 VERSION
 
-Version 0.03
+Version 0.04
 
 =cut
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 =head1 DESCRIPTION
 
@@ -44,7 +45,7 @@ sub new {
  $dir = cwd       unless defined $dir;
  my ($repo, $bare, $name, $work);
  if ($args{fake}) {
-  $work = $dir;
+  $repo = $work = $dir;
  } else { 
   my @tries = ($dir);
   my @chunks = splitdir $dir;
@@ -128,7 +129,29 @@ sub run {
   );
   s/\^([\^ngGwWbBR])/$escapes{$1}->()/eg for @args;
  }
- system { $conf->git } $conf->git, @args;
+ {
+  local $ENV{GIT_DIR} = $self->repo if exists $ENV{GIT_DIR};
+  local $ENV{GIT_EXEC_PATH} = $conf->git if exists $ENV{GIT_EXEC_PATH};
+  system { $conf->git } $conf->git, @args;
+ }
+ if ($? == -1) {
+  warn "Failed to execute git: $!\n";
+  return;
+ }
+ my $ret;
+ $ret = WEXITSTATUS($?) if WIFEXITED($?);
+ my $sig;
+ if (WIFSIGNALED($?)) {
+  $sig = WTERMSIG($?);
+  warn "git died with signal $sig\n";
+  if ($sig == SIGINT || $sig == SIGQUIT) {
+   warn "Aborting.\n";
+   exit $sig;
+  }
+ } elsif ($ret) {
+  warn "git returned $ret\n";
+ }
+ return wantarray ? ($ret, $sig) : $ret;
 }
 
 =head2 C<fake>

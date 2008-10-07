@@ -5,9 +5,9 @@ use warnings;
 
 use Carp qw/croak/;
 
-use Object::Tiny qw/cmd args/;
+use Object::Tiny qw/cmd args policy/;
 
-use App::Rgit::Utils qw/validate/;
+use App::Rgit::Utils qw/validate :codes/;
 
 =head1 NAME
 
@@ -15,11 +15,11 @@ App::Rgit::Command - Base class for App::Rgit commands.
 
 =head1 VERSION
 
-Version 0.03
+Version 0.04
 
 =cut
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 =head1 DESCRIPTION
 
@@ -36,7 +36,7 @@ Creates a new command object for C<$cmd> that is bound to be called with argumen
 =cut
 
 my %commands;
-__PACKAGE__->action($_ => 'Once') for qw/version help daemon init/, ' ';
+__PACKAGE__->action($_ => 'Once') for qw/daemon gui help init version/, ' ';
 
 sub new {
  my ($class, %args) = &validate;
@@ -51,8 +51,9 @@ sub new {
  }
  eval "require $action; 1" or croak "Couldn't load $action: $@";
  $class->SUPER::new(
-  cmd  => $cmd,
-  args => $args{args} || [ ],
+  cmd    => $cmd,
+  args   => $args{args} || [ ],
+  policy => $args{policy},
  );
 }
 
@@ -77,17 +78,30 @@ sub action {
  $commands{$cmd} = $pkg;
 }
 
+=head2 C<report $conf, $repo, $status>
+
+=cut
+
+sub report {
+ my ($self) = @_;
+ my $cb = $self->policy;
+ return $_[3] ? LAST : NEXT unless $cb;
+ my $code = $cb->(@_);
+ return defined $code ? $code : NEXT;
+}
+
 =head2 C<cmd>
 
 =head2 C<args>
+
+=head2 C<policy>
 
 Accessors.
 
 =head2 C<run $conf>
 
 Runs the command with a L<App::Rgit::Config> configuration object.
-Stops as soon as one of the executed commands fails, and returns the corresponding exit code.
-Returns zero when all went fine.
+Handles back the code to return to the system and the last policy.
 Implemented in subclasses.
 
 =head1 SEE ALSO

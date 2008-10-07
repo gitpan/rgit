@@ -4,16 +4,68 @@ use strict;
 use warnings;
 
 use Carp qw/croak/;
+use Config qw/%Config/;
 use Cwd qw/cwd/;
 use File::Spec::Functions qw/catfile path/;
-use List::Util qw/first/;
 
+use App::Rgit::Utils qw/:codes/;
 use App::Rgit;
 
-our $VERSION = '0.03';
+our $VERSION;
+BEGIN {
+ $VERSION = '0.04';
+}
 
-my $cmd = first { !/^-/ } @ARGV;
-$cmd = ' ' unless defined $cmd;
+my %opts;
+my $cmd;
+
+BEGIN {
+ @ARGV = grep {
+  defined $cmd ? $_
+               : ( /^-([IKV]+)$/ ? do { $opts{$_} = 1 for split //, $1; () }
+                                 : do { $cmd = $_ unless /^-/; $_ } )
+ } @ARGV;
+ warn "rgit $VERSION\n" if $opts{V};
+ $cmd = ' ' unless defined $cmd;
+}
+
+BEGIN {
+ if (-t && $opts{I}) {
+  if (eval "require Term::ReadKey; 1") {
+   Term::ReadKey->import;
+   *policy = sub {
+    my ($cmd, $conf, $repo, $status, $signal) = @_;
+    return NEXT unless $status;
+    print STDERR 'The command failed for ' . $repo->work . "\n";
+    print STDERR "[a]bort, [i]gnore, [I]gnore all, [r]etry ?";
+    ReadMode(4);
+    my $key = ReadKey(0);
+    ReadMode(1);
+    print STDERR "\n";
+    my %codes = (
+     'a' => LAST,
+     'i' => NEXT,
+     'I' => NEXT | SAVE,
+     'r' => REDO,
+    );
+    $key = 'a' unless defined $key;
+    my $code = $codes{$key};
+    $code = $codes{a} unless defined $code;
+    return $code;
+   };
+  } else {
+   warn "You have to install Term::ReadKey to use the interactive mode.\n";
+  }
+ }
+ *policy = sub { NEXT } if $opts{K} and not defined *policy{CODE};
+ *policy = sub {
+  my ($cmd, $conf, $repo, $status, $signal) = @_;
+  return NEXT unless $status;
+  return LAST;
+ } unless defined *policy{CODE};
+}
+
+setpgrp 0, 0 if $Config{d_setpgrp};
 
 my $git = $ENV{GIT_EXEC_PATH};
 unless (defined $git) {
@@ -31,10 +83,11 @@ my $root = $ENV{GIT_DIR};
 $root = cwd unless defined $root;
 
 exit App::Rgit->new(
- git  => $git,
- root => $root,
- cmd  => $cmd,
- args => \@ARGV
+ git    => $git,
+ root   => $root,
+ cmd    => $cmd,
+ args   => \@ARGV,
+ policy => \&policy,
 )->run;
 
 __END__
@@ -45,11 +98,11 @@ rgit - Recursively execute a command on all the git repositories in a directory 
 
 =head1 VERSION
 
-Version 0.03
+Version 0.04
 
 =head1 SYNOPSIS
 
-    rgit [GIT_OPTIONS] COMMAND [COMMAND_ARGS]
+    rgit [-K|-V|-I] [GIT_OPTIONS] COMMAND [COMMAND_ARGS]
 
 =head1 DESCRIPTION
 
@@ -96,10 +149,41 @@ C<^^> with a bare C<^>.
 
 =back
 
-There are actually a few commands that are only executed once in the current directory : C<version>, C<help>, C<daemon> and C<init>.
+There are actually a few commands that are only executed once in the current directory : C<daemon>, C<gui>, C<help>, C<init> and C<version>.
 For any of those, no format substitution is done.
 
 You can specify which C<git> executable to use with the C<GIT_EXEC_PATH> environment variable.
+
+=head1 COMMAND LINE SWITCHES
+
+C<rgit> takes its options as the capital switches that comes before the git command.
+It's possible to bundle them together.
+They are removed from the argument list before calling C<git>.
+
+=over 4
+
+=item *
+
+C<-K>
+
+Keep processing on error.
+The default policy is to stop whenever an error occured.
+
+=item *
+
+C<-I>
+
+Enables interactive mode when the standard input is a tty.
+Requires L<Term::ReadKey> to be installed.
+This lets you choose interactively what to do when one of the commands returns a non-zero status.
+
+=item *
+
+C<-V>
+
+Outputs the version.
+
+=back
 
 =head1 EXAMPLES
 
@@ -117,7 +201,7 @@ Add a remote to all repositories in "/foo/bar" to their bare counterpart in C<qu
 
 =head1 DEPENDENCIES
 
-The core modules L<Carp>, L<Cwd>, L<Exporter>, L<File::Find>, L<File::Spec::Functions> and L<List::Util>.
+The core modules L<Carp>, C<Config>, L<Cwd>, L<Exporter>, L<File::Find>, L<File::Spec::Functions> and L<POSIX>.
 
 L<Object::Tiny>.
 

@@ -1,5 +1,16 @@
 Revision history for rgit
 
+0.04    2008-10-07 22:05 UTC
+        + Add : Command-line switches -V, -I, -K. List::Util isn't required
+                anymore.
+        + Add : Policies for when a command fail.
+        + Add : Interactive mode.
+        + Fix : Test more portably the returned status of system. POSIX is
+                required.
+        + Fix : git-gui should be ran once too.
+        + Fix : Setting GIT_DIR didn't really work.
+        + Tst : Coverage down to 95%.
+
 0.03    2008-10-06 16:45 UTC
         + Chg : Repositories are now sorted by path before being visited.
         + Fix : Prefer to chdir() into the working directory, as commands like

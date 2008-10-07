@@ -7,8 +7,9 @@ use Cwd qw/cwd abs_path/;
 use File::Spec::Functions qw/catdir catfile/;
 use File::Temp qw/tempfile tempdir/;
 
-use Test::More tests => 2 + 3 * 2;
+use Test::More tests => 2 + 2 * 4 + 11 * (3 + 1 + 3 + 6);
 
+use App::Rgit::Utils qw/:codes/;
 use App::Rgit;
 
 sub build {
@@ -91,20 +92,45 @@ is(grep({ ref eq 'ARRAY' } @expected), 3, 'all of them are array references');
              '^n'
             ], @expected;
 
-for my $cmd (qw/commit FAIL/) {
+sub try {
+ my ($cmd, $exp, $policy) = @_;
  my ($fh, $filename) = tempfile(UNLINK => 1);
  my $ar = App::Rgit->new(
-  git  => abs_path('t/bin/git'),
-  root => $tmpdir,
-  cmd  => $cmd,
-  args => [ abs_path($filename), $cmd, qw/^n ^g ^w ^b ^G ^W ^B ^R ^^n/ ]
+  git    => abs_path('t/bin/git'),
+  root   => $tmpdir,
+  cmd    => $cmd,
+  args   => [ abs_path($filename), $cmd, qw/^n ^g ^w ^b ^G ^W ^B ^R ^^n/ ],
+  policy => $policy,
  );
  isnt($ar, undef, "each $cmd has a defined object");
- my $exit = $ar->run;
+ my $exit;
  my $fail = $cmd eq 'FAIL' ? 1 : 0;
- is($exit, $fail << 8, "each $cmd returned $fail");
+ if ($fail) {
+  ($exit, undef) = $ar->run;
+ } else {
+  $exit = $ar->run;
+ }
+ is($exit, $fail, "each $cmd returned $fail");
  my @lines = split /\n/, do { local $/; <$fh> };
  my $res = [ map [ split /\|/, $_ ], @lines ];
- my $exp = [ map [ $cmd, @$_ ], $fail ? $expected[0] : @expected ];
- is_deeply($res, $exp, "each $cmd did the right thing");
+ $exp = [ map [ $cmd, @$_ ], @$exp ];
+ for my $i (0 .. $#$exp) {
+  my $e = $exp->[$i];
+  my $r = shift @$res;
+  isnt($r, undef, "each $cmd visited repository $i");
+SKIP:
+  {
+   skip 'didn\'t visited that repo' => 10 unless defined $r;
+   is($r->[$_], $e->[$_], "each $cmd argument $_ for repository $i is ok")
+    for 0 .. 9;
+  }
+ }
 }
+
+try 'commit', [ @expected ];
+try 'FAIL',   [ $expected[0] ];
+try 'FAIL',   [ @expected ],
+              sub { NEXT | SAVE };
+my $c = 0;
+try 'FAIL',   [ map { ($expected[$_]) x 2 } 0 .. $#expected ],
+              sub { my $ret = $c ? undef : REDO; $c = 1 - $c; $ret };
