@@ -11,11 +11,11 @@ App::Rgit::Utils - Miscellanous utilities for App::Rgit classes.
 
 =head1 VERSION
 
-Version 0.04
+Version 0.05
 
 =cut
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 =head1 DESCRIPTION
 
@@ -36,6 +36,19 @@ use constant {
  NEXT => 0x2,
  REDO => 0x4,
  LAST => 0x8,
+};
+
+=head2 C<DIAG>, C<INFO>, C<WARN>, C<ERR> and C<CRIT>
+
+Message levels.
+
+=cut
+
+use constant {
+ INFO => 3,
+ WARN => 2,
+ ERR  => 1,
+ CRIT => 0,
 };
 
 =head1 FUNCTIONS
@@ -60,14 +73,17 @@ C<validate> is only exported on request, either by its name or by the C<'funcs'>
 
 C<NEXT> C<REDO>, C<LAST> and C<SAVE> are only exported on request, either by their name or by the C<'codes'> tags.
 
+C<INFO>, C<WARN>, C<ERR> and C<CRIT> are only exported on request, either by their name or by the C<'levels'> tags.
+
 =cut
 
 use base qw/Exporter/;
 
 our @EXPORT         = ();
 our %EXPORT_TAGS    = (
- funcs => [ qw/validate/ ],
- codes => [ qw/SAVE NEXT REDO LAST/ ],
+ funcs  => [ qw/validate/ ],
+ codes  => [ qw/SAVE NEXT REDO LAST/ ],
+ levels => [ qw/INFO WARN ERR CRIT/ ],
 );
 our @EXPORT_OK      = map { @$_ } values %EXPORT_TAGS;
 $EXPORT_TAGS{'all'} = [ @EXPORT_OK ];

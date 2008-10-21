@@ -17,11 +17,11 @@ App::Rgit::Repository - Class representing a Git repository.
 
 =head1 VERSION
 
-Version 0.04
+Version 0.05
 
 =cut
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 =head1 DESCRIPTION
 
@@ -110,24 +110,30 @@ sub _abs2rel {
  $a;
 }
 
+my %escapes = (
+ '^' => sub { '^' },
+ 'n' => sub { shift->name },
+ 'g' => sub { _abs2rel(shift->repo, shift->root) },
+ 'G' => sub { shift->repo },
+ 'w' => sub { _abs2rel(shift->work, shift->root) },
+ 'W' => sub { shift->work },
+ 'b' => sub {
+  my ($self, $conf) = @_;
+  _abs2rel($self->bare ? $self->repo : $self->work . '.git', $conf->root)
+ },
+ 'B' => sub { $_[0]->bare ? $_[0]->repo : $_[0]->work . '.git' },
+ 'R' => sub { $_[1]->root },
+);
+my $e = quotemeta join '', keys %escapes;
+$e = "[$e]";
+
 sub run {
  my $self = shift;
  my $conf = shift;
  return unless $conf->isa('App::Rgit::Config');
  my @args = @_;
  unless ($self->fake) {
-  my %escapes = (
-   '^' => sub { '^' },
-   'n' => sub { $self->name },
-   'g' => sub { _abs2rel($self->repo, $conf->root) },
-   'G' => sub { $self->repo },
-   'w' => sub { _abs2rel($self->work, $conf->root) },
-   'W' => sub { $self->work },
-   'b' => sub { _abs2rel($self->bare ? $self->repo : $self->work . '.git', $conf->root) },
-   'B' => sub { $self->bare ? $self->repo : $self->work . '.git' },
-   'R' => sub { $conf->root },
-  );
-  s/\^([\^ngGwWbBR])/$escapes{$1}->()/eg for @args;
+  s/\^($e)/$escapes{$1}->($self, $conf)/eg for @args;
  }
  {
   local $ENV{GIT_DIR} = $self->repo if exists $ENV{GIT_DIR};
@@ -135,7 +141,7 @@ sub run {
   system { $conf->git } $conf->git, @args;
  }
  if ($? == -1) {
-  warn "Failed to execute git: $!\n";
+  $conf->crit("Failed to execute git: $!\n");
   return;
  }
  my $ret;
@@ -143,13 +149,13 @@ sub run {
  my $sig;
  if (WIFSIGNALED($?)) {
   $sig = WTERMSIG($?);
-  warn "git died with signal $sig\n";
+  $conf->warn("git died with signal $sig\n");
   if ($sig == SIGINT || $sig == SIGQUIT) {
-   warn "Aborting.\n";
+   $conf->err("Aborting\n");
    exit $sig;
   }
  } elsif ($ret) {
-  warn "git returned $ret\n";
+  $conf->info("git returned $ret\n");
  }
  return wantarray ? ($ret, $sig) : $ret;
 }

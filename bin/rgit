@@ -8,12 +8,12 @@ use Config qw/%Config/;
 use Cwd qw/cwd/;
 use File::Spec::Functions qw/catfile path/;
 
-use App::Rgit::Utils qw/:codes/;
+use App::Rgit::Utils qw/:codes :levels/;
 use App::Rgit;
 
 our $VERSION;
 BEGIN {
- $VERSION = '0.04';
+ $VERSION = '0.05';
 }
 
 my %opts;
@@ -22,47 +22,32 @@ my $cmd;
 BEGIN {
  @ARGV = grep {
   defined $cmd ? $_
-               : ( /^-([IKV]+)$/ ? do { $opts{$_} = 1 for split //, $1; () }
-                                 : do { $cmd = $_ unless /^-/; $_ } )
+               : ( /^-([DIKV]+)$/ ? do { $opts{$_} = 1 for split //, $1; () }
+                                  : do { $cmd = $_ unless /^-/; $_ } )
  } @ARGV;
- warn "rgit $VERSION\n" if $opts{V};
  $cmd = ' ' unless defined $cmd;
 }
+
+my $shell;
 
 BEGIN {
  if (-t && $opts{I}) {
   if (eval "require Term::ReadKey; 1") {
    Term::ReadKey->import;
-   *policy = sub {
-    my ($cmd, $conf, $repo, $status, $signal) = @_;
-    return NEXT unless $status;
-    print STDERR 'The command failed for ' . $repo->work . "\n";
-    print STDERR "[a]bort, [i]gnore, [I]gnore all, [r]etry ?";
-    ReadMode(4);
-    my $key = ReadKey(0);
-    ReadMode(1);
-    print STDERR "\n";
-    my %codes = (
-     'a' => LAST,
-     'i' => NEXT,
-     'I' => NEXT | SAVE,
-     'r' => REDO,
-    );
-    $key = 'a' unless defined $key;
-    my $code = $codes{$key};
-    $code = $codes{a} unless defined $code;
-    return $code;
-   };
+   *policy = \&policy_interactive;
+   for (grep defined, $ENV{SHELL}, '/bin/sh') {
+    if (-x $_) {
+     $shell = $_;
+     last;
+    }
+   }
   } else {
    warn "You have to install Term::ReadKey to use the interactive mode.\n";
   }
  }
- *policy = sub { NEXT } if $opts{K} and not defined *policy{CODE};
- *policy = sub {
-  my ($cmd, $conf, $repo, $status, $signal) = @_;
-  return NEXT unless $status;
-  return LAST;
- } unless defined *policy{CODE};
+ *policy = $opts{K} ? \&policy_keep
+                    : \&policy_default
+           unless defined *policy{CODE};
 }
 
 setpgrp 0, 0 if $Config{d_setpgrp};
@@ -82,13 +67,64 @@ croak "Couldn't find any valid git executable" unless defined $git;
 my $root = $ENV{GIT_DIR};
 $root = cwd unless defined $root;
 
-exit App::Rgit->new(
+my $ar = App::Rgit->new(
  git    => $git,
  root   => $root,
  cmd    => $cmd,
  args   => \@ARGV,
  policy => \&policy,
-)->run;
+ debug  => $opts{D} ? INFO : WARN,
+);
+
+print STDOUT "rgit $VERSION\n" if $opts{V};
+
+exit $ar->run;
+
+sub policy_default {
+ my ($cmd, $conf, $repo, $status, $signal) = @_;
+ return NEXT unless $status;
+ return LAST;
+}
+
+sub policy_keep { NEXT }
+
+sub policy_interactive {
+ my ($cmd, $conf, $repo, $status, $signal) = @_;
+ return NEXT unless $status;
+ my %codes = (
+  'a' => [ LAST,        'aborting' ],
+  'i' => [ NEXT,        'ignoring' ],
+  'I' => [ NEXT | SAVE, 'ignoring all' ],
+  'r' => [ REDO,        'retrying' ],
+ );
+ my $int = { GetControlChars() }->{INTERRUPT};
+ while (1) {
+  $conf->warn("[a]bort, [i]gnore, [I]gnore all, [r]etry, open [s]hell ?");
+  ReadMode(4);
+  my $key = ReadKey(0);
+  ReadMode(1);
+  print STDERR "\n";
+  next unless defined $key;
+  if ($key eq $int) {
+   $conf->warn("Interrupted, aborting\n");
+   return LAST;
+  } elsif ($key eq 's') {
+   if (defined $shell) {
+    $conf->info('Opening shell in ', $repo->work, "\n");
+    my $cwd = cwd;
+    $repo->chdir;
+    system { $shell } $shell;
+    chroot $cwd;
+   } else {
+    $conf->err("Couldn't find any shell\n");
+   }
+  } elsif (exists $codes{$key}) {
+   my $code = $codes{$key};
+   $conf->info('Okay, ', $code->[1], "\n");
+   return $code->[0];
+  }
+ }
+}
 
 __END__
 
@@ -98,11 +134,11 @@ rgit - Recursively execute a command on all the git repositories in a directory 
 
 =head1 VERSION
 
-Version 0.04
+Version 0.05
 
 =head1 SYNOPSIS
 
-    rgit [-K|-V|-I] [GIT_OPTIONS] COMMAND [COMMAND_ARGS]
+    rgit [-K|-I|-D|-V] [GIT_OPTIONS] COMMAND [COMMAND_ARGS]
 
 =head1 DESCRIPTION
 
@@ -179,6 +215,12 @@ This lets you choose interactively what to do when one of the commands returns a
 
 =item *
 
+C<-D>
+
+Outputs diagnostics.
+
+=item *
+
 C<-V>
 
 Outputs the version.
@@ -201,7 +243,7 @@ Add a remote to all repositories in "/foo/bar" to their bare counterpart in C<qu
 
 =head1 DEPENDENCIES
 
-The core modules L<Carp>, C<Config>, L<Cwd>, L<Exporter>, L<File::Find>, L<File::Spec::Functions> and L<POSIX>.
+The core modules L<Carp>, L<Config>, L<Cwd>, L<Exporter>, L<File::Find>, L<File::Spec::Functions> and L<POSIX>.
 
 L<Object::Tiny>.
 

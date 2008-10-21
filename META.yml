@@ -1,24 +1,29 @@
 --- #YAML:1.0
-name:                rgit
-version:             0.04
-abstract:            Recursively execute a command on all the git repositories in a directory tree.
-license:             perl
-author:              
+name:               rgit
+version:            0.05
+abstract:           Recursively execute a command on all the git repositories in a directory tree.
+author:
     - Vincent Pit <perl@profvince.com>
-generated_by:        ExtUtils::MakeMaker version 6.42
-distribution_type:   module
-requires:     
-    Carp:                          0
-    Config:                        0
-    Cwd:                           0
-    Exporter:                      0
-    File::Find:                    0
-    File::Spec::Functions:         0
-    Object::Tiny:                  0
-    POSIX:                         0
+license:            perl
+distribution_type:  module
+configure_requires:
+    ExtUtils::MakeMaker:  0
+requires:
+    Carp:                 0
+    Cwd:                  0
+    Exporter:             0
+    File::Find:           0
+    File::Spec::Functions:  0
+    Object::Tiny:         0
+    POSIX:                0
+no_index:
+    directory:
+        - t
+        - inc
+generated_by:       ExtUtils::MakeMaker version 6.46
 meta-spec:
-    url:     http://module-build.sourceforge.net/META-spec-v1.3.html
-    version: 1.3
+    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
+    version:  1.4
 build_requires:
     Cwd:                           0
     ExtUtils::MakeMaker:           0

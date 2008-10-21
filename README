@@ -3,10 +3,10 @@ NAME
     directory tree.
 
 VERSION
-    Version 0.04
+    Version 0.05
 
 SYNOPSIS
-        rgit [-K|-V|-I] [GIT_OPTIONS] COMMAND [COMMAND_ARGS]
+        rgit [-K|-I|-D|-V] [GIT_OPTIONS] COMMAND [COMMAND_ARGS]
 
 DESCRIPTION
     This utility recursively searches in the current directory (or in the
@@ -60,6 +60,10 @@ COMMAND LINE SWITCHES
         Term::ReadKey to be installed. This lets you choose interactively
         what to do when one of the commands returns a non-zero status.
 
+    *   "-D"
+
+        Outputs diagnostics.
+
     *   "-V"
 
         Outputs the version.
@@ -79,7 +83,7 @@ EXAMPLES
         GIT_DIR="/foo/bar" rgit remote add host git://host/qux/^b
 
 DEPENDENCIES
-    The core modules Carp, "Config", Cwd, Exporter, File::Find,
+    The core modules Carp, Config, Cwd, Exporter, File::Find,
     File::Spec::Functions and POSIX.
 
     Object::Tiny.

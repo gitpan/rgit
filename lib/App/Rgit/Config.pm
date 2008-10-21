@@ -7,10 +7,10 @@ use Carp qw/croak/;
 use Cwd qw/abs_path/;
 use File::Spec::Functions qw/file_name_is_absolute/;
 
-use Object::Tiny qw/root git cwd_repo/;
+use Object::Tiny qw/root git cwd_repo debug/;
 
 use App::Rgit::Repository;
-use App::Rgit::Utils qw/validate/;
+use App::Rgit::Utils qw/validate :levels/;
 
 =head1 NAME
 
@@ -18,11 +18,11 @@ App::Rgit::Config - Base class for App::Rgit configurations.
 
 =head1 VERSION
 
-Version 0.04
+Version 0.05
 
 =cut
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 =head1 DESCRIPTION
 
@@ -52,8 +52,39 @@ sub new {
   root     => $root,
   git      => $args{git},
   cwd_repo => $r,
+  debug    => defined $args{debug} ? int $args{debug} : WARN,
  );
 }
+
+=head2 C<info $msg>
+
+=head2 C<warn $msg>
+
+=head2 C<err $msg>
+
+=head2 C<crit $msg>
+
+Notifies a message C<$msg> of the corresponding level.
+
+=cut
+
+sub _notify {
+ my $self = shift;
+ my $level = shift;
+ if ($self->debug >= $level) {
+  print STDERR @_;
+  return 1;
+ }
+ return 0;
+}
+
+sub info { shift->_notify(INFO, @_) }
+
+sub warn { shift->_notify(WARN, @_) }
+
+sub err  { shift->_notify(ERR, @_) }
+
+sub crit { shift->_notify(CRIT, @_) }
 
 =head2 C<root>
 
@@ -62,6 +93,8 @@ sub new {
 =head2 C<repos>
 
 =head2 C<cwd_repo>
+
+=head2 C<debug>
 
 Accessors.
 

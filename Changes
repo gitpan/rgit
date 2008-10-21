@@ -1,5 +1,13 @@
 Revision history for rgit
 
+0.05    2008-10-21 21:15 UTC
+        + Add : When a command returned non-zero, you are now ask if you want to
+                fork a shell inside the repository.
+        + Add : The -D command-line switch makes rgit output diagnostics. The
+                default is quieter than before.
+        + Chg : Perl 5.8 is required.
+        + Upd : META.yml spec updated to 1.4.
+
 0.04    2008-10-07 22:05 UTC
         + Add : Command-line switches -V, -I, -K. List::Util isn't required
                 anymore.

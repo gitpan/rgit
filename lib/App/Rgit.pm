@@ -15,11 +15,11 @@ App::Rgit - Backend that supports the rgit utility.
 
 =head1 VERSION
 
-Version 0.04
+Version 0.05
 
 =cut
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 =head1 DESCRIPTION
 
@@ -38,8 +38,9 @@ Creates a new L<App::Rgit> object that's bound to execute the command C<$cmd> on
 sub new {
  my ($class, %args) = &validate;
  my $config = App::Rgit::Config->new(
-  root => $args{root},
-  git  => $args{git},
+  root  => $args{root},
+  git   => $args{git},
+  debug => $args{debug},
  );
  return unless defined $config;
  my $command = App::Rgit::Command->new(

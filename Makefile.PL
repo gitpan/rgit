@@ -1,3 +1,5 @@
+use 5.008;
+
 use strict;
 use warnings;
 use ExtUtils::MakeMaker;
@@ -30,7 +32,6 @@ WriteMakefile(
     EXE_FILES     => [ 'bin/rgit' ],
     PREREQ_PM     => {
         'Carp'                  => 0,
-        'Config'                => 0,
         'Cwd'                   => 0,
         'Exporter'              => 0,
         'File::Find'            => 0,

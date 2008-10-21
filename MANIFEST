@@ -13,6 +13,7 @@ lib/App/Rgit/Repository.pm
 lib/App/Rgit/Utils.pm
 t/00-load.t
 t/15-failures.t
+t/16-levels.t
 t/20-each.t
 t/21-once.t
 t/90-boilerplate.t
