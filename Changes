@@ -1,5 +1,12 @@
 Revision history for rgit
 
+0.06    2009-01-04 15:35 UTC
+        + Chg : INCOMPATIBLE CHANGE : since ^ is actually an escape character
+                for cmd.exe, and that there's no good universal escape
+                character, let's use % for our formats instead.
+        + Fix : Tests on Win32.
+        + Doc : Nits and clarifications.
+
 0.05    2008-10-21 21:15 UTC
         + Add : When a command returned non-zero, you are now ask if you want to
                 fork a shell inside the repository.

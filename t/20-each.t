@@ -89,7 +89,7 @@ is(grep({ ref eq 'ARRAY' } @expected), 3, 'all of them are array references');
              @$_,
              map({ catdir($tmpdir, $_) } @{$_}[1 .. 3]),
              $tmpdir,
-             '^n', '^x'
+             '%n', '%x'
             ], @expected;
 
 sub try {
@@ -99,7 +99,7 @@ sub try {
   git    => abs_path('t/bin/git'),
   root   => $tmpdir,
   cmd    => $cmd,
-  args   => [ abs_path($filename), $cmd, qw/^n ^g ^w ^b ^G ^W ^B ^R ^^n ^x/ ],
+  args   => [ abs_path($filename), $cmd, qw/%n %g %w %b %G %W %B %R %%n %x/ ],
   policy => $policy,
  );
  isnt($ar, undef, "each $cmd has a defined object");
@@ -121,6 +121,7 @@ sub try {
 SKIP:
   {
    skip 'didn\'t visited that repo' => 10 unless defined $r;
+   s/[\r\n]*$// for @$r;
    is($r->[$_], $e->[$_], "each $cmd argument $_ for repository $i is ok")
     for 0 .. 10;
   }

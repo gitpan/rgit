@@ -4,8 +4,15 @@ use strict;
 use warnings;
 
 use Cwd qw/cwd abs_path/;
-use File::Spec::Functions qw/catdir splitdir abs2rel file_name_is_absolute/;
+use File::Spec::Functions qw/canonpath catdir splitdir abs2rel file_name_is_absolute/;
 use POSIX qw/WIFEXITED WEXITSTATUS WIFSIGNALED WTERMSIG SIGINT SIGQUIT/;
+
+BEGIN {
+ no warnings 'redefine';
+ *WIFEXITED   = sub { 1 }             unless eval { WIFEXITED(0);   1 };
+ *WEXITSTATUS = sub { shift() >> 8 }  unless eval { WEXITSTATUS(0); 1 };
+ *WIFSIGNALED = sub { shift() & 127 } unless eval { WIFSIGNALED(0); 1 };
+}
 
 use Object::Tiny qw/fake repo bare name work/;
 
@@ -17,11 +24,11 @@ App::Rgit::Repository - Class representing a Git repository.
 
 =head1 VERSION
 
-Version 0.05
+Version 0.06
 
 =cut
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 =head1 DESCRIPTION
 
@@ -59,6 +66,7 @@ sub new {
    }
   }
   return unless defined $repo;
+  $repo = canonpath $repo;
   @chunks = splitdir $repo;
   $last = pop @chunks;
   if ($last eq '.git') {
@@ -111,7 +119,7 @@ sub _abs2rel {
 }
 
 my %escapes = (
- '^' => sub { '^' },
+ '%' => sub { '%' },
  'n' => sub { shift->name },
  'g' => sub { _abs2rel(shift->repo, shift->root) },
  'G' => sub { shift->repo },
@@ -133,12 +141,14 @@ sub run {
  return unless $conf->isa('App::Rgit::Config');
  my @args = @_;
  unless ($self->fake) {
-  s/\^($e)/$escapes{$1}->($self, $conf)/eg for @args;
+  s/%($e)/$escapes{$1}->($self, $conf)/eg for @args;
  }
+ unshift @args, $conf->git;
+ $conf->info('Executing "', join(' ', @args), '" into ', $self->work, "\n");
  {
   local $ENV{GIT_DIR} = $self->repo if exists $ENV{GIT_DIR};
   local $ENV{GIT_EXEC_PATH} = $conf->git if exists $ENV{GIT_EXEC_PATH};
-  system { $conf->git } $conf->git, @args;
+  system { $args[0] } @args;
  }
  if ($? == -1) {
   $conf->crit("Failed to execute git: $!\n");
@@ -194,7 +204,7 @@ You can find documentation for this module with the perldoc command.
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2008 Vincent Pit, all rights reserved.
+Copyright 2008-2009 Vincent Pit, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 

@@ -13,7 +13,7 @@ use App::Rgit;
 
 our $VERSION;
 BEGIN {
- $VERSION = '0.05';
+ $VERSION = '0.06';
 }
 
 my %opts;
@@ -114,7 +114,7 @@ sub policy_interactive {
     my $cwd = cwd;
     $repo->chdir;
     system { $shell } $shell;
-    chroot $cwd;
+    chdir $cwd;
    } else {
     $conf->err("Couldn't find any shell\n");
    }
@@ -134,7 +134,7 @@ rgit - Recursively execute a command on all the git repositories in a directory 
 
 =head1 VERSION
 
-Version 0.05
+Version 0.06
 
 =head1 SYNOPSIS
 
@@ -142,50 +142,50 @@ Version 0.05
 
 =head1 DESCRIPTION
 
-This utility recursively searches in the current directory (or in the directory given by the C<GIT_DIR> environment variable if it's set) for all git repositories, sort this list by the repository path, C<chdir> into each of them, and executes the specified git command.
-Moreover, those formats are substuted in the arguments before running the command :
+This utility recursively searches in a root directory (which may be the current working directory or - if it has been set - the directory given by the C<GIT_DIR> environment variable) for all git repositories, sort this list by the repository path, C<chdir> into each of them, and executes the specified git command.
+Moreover, those formats are substituted in the arguments before running the command :
 
 =over 4
 
 =item *
 
-C<^n> with the current repository name.
+C<%n> with the current repository name.
 
 =item *
 
-C<^g> with the relative path to the current repository.
+C<%g> with the relative path (based from the root directory) to the current repository.
 
 =item *
 
-C<^G> with the absolute path to the current repository.
+C<%G> with the absolute path to the current repository.
 
 =item *
 
-C<^w> with the relative path to the current repository's working directory.
+C<%w> with the relative path (based from the root directory) to the current repository's working directory.
 
 =item *
 
-C<^W> with the absolute path to the current repository's working directory.
+C<%W> with the absolute path to the current repository's working directory.
 
 =item *
 
-C<^b> with a "bareified" relative path, i.e. C<^g> if this is a bare repository, and C<^w.git> otherwise.
+C<%b> with a "bareified" relative path, i.e. C<%g> if this is a bare repository, and C<%w.git> otherwise.
 
 =item *
 
-C<^B> with an absolute version of the "bareified" path.
+C<%B> with an absolute version of the "bareified" path.
 
 =item *
 
-C<^R> with the absolute path to the current root directory.
+C<%R> with the absolute path to the root directory.
 
 =item *
 
-C<^^> with a bare C<^>.
+C<%%> with a bare C<%>.
 
 =back
 
-There are actually a few commands that are only executed once in the current directory : C<daemon>, C<gui>, C<help>, C<init> and C<version>.
+There are actually a few commands that are only executed once in the root directory : C<daemon>, C<gui>, C<help>, C<init> and C<version>.
 For any of those, no format substitution is done.
 
 You can specify which C<git> executable to use with the C<GIT_EXEC_PATH> environment variable.
@@ -235,11 +235,11 @@ Execute C<git gc> on all the repositories below the current directory :
 
 Tag all the repositories with their name :
 
-    rgit tag ^n
+    rgit tag %n
 
 Add a remote to all repositories in "/foo/bar" to their bare counterpart in C<qux> on F<host> :
 
-    GIT_DIR="/foo/bar" rgit remote add host git://host/qux/^b
+    GIT_DIR="/foo/bar" rgit remote add host git://host/qux/%b
 
 =head1 DEPENDENCIES
 
@@ -267,7 +267,7 @@ Tests code coverage report is available at L<http://www.profvince.com/perl/cover
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2008 Vincent Pit, all rights reserved.
+Copyright 2008-2009 Vincent Pit, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 

@@ -22,4 +22,5 @@ t/92-pod-coverage.t
 t/95-portability-files.t
 t/99-kwalitee.t
 t/bin/git
+t/bin/git.bat
 META.yml                                 Module meta-data (added by MakeMaker)

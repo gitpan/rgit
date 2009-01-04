@@ -12,17 +12,19 @@ use Object::Tiny qw/root git cwd_repo debug/;
 use App::Rgit::Repository;
 use App::Rgit::Utils qw/validate :levels/;
 
+use constant IS_WIN32 => $^O eq 'MSWin32';
+
 =head1 NAME
 
 App::Rgit::Config - Base class for App::Rgit configurations.
 
 =head1 VERSION
 
-Version 0.05
+Version 0.06
 
 =cut
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 =head1 DESCRIPTION
 
@@ -40,17 +42,31 @@ Creates a new configuration object based on the root directory C<$root> and usin
 
 sub new {
  my ($class, %args) = &validate;
+
  my $root = $args{root};
  return unless defined $root and -d $root;
  $root = abs_path $root unless file_name_is_absolute $root;
- return unless defined $args{git} and -x $args{git};
+
+ my $git = $args{git};
+ return unless defined $git;
+ if (IS_WIN32) {
+  unless (-x $git) {
+   $git .= '.bat';
+   return unless -x $git;
+  }
+ } else {
+  return unless -x $git;
+ }
+
  my $conf = 'App::Rgit::Config::Default';
  eval "require $conf; 1" or croak "Couldn't load $conf: $@";
+
  my $r = App::Rgit::Repository->new(fake => 1);
  return unless defined $r;
+
  $conf->SUPER::new(
   root     => $root,
-  git      => $args{git},
+  git      => $git,
   cwd_repo => $r,
   debug    => defined $args{debug} ? int $args{debug} : WARN,
  );
@@ -120,7 +136,7 @@ You can find documentation for this module with the perldoc command.
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2008 Vincent Pit, all rights reserved.
+Copyright 2008-2009 Vincent Pit, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 

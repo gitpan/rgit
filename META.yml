@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               rgit
-version:            0.05
+version:            0.06
 abstract:           Recursively execute a command on all the git repositories in a directory tree.
 author:
     - Vincent Pit <perl@profvince.com>
@@ -20,7 +20,7 @@ no_index:
     directory:
         - t
         - inc
-generated_by:       ExtUtils::MakeMaker version 6.46
+generated_by:       ExtUtils::MakeMaker version 6.48
 meta-spec:
     url:      http://module-build.sourceforge.net/META-spec-v1.4.html
     version:  1.4

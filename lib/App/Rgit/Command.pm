@@ -15,11 +15,11 @@ App::Rgit::Command - Base class for App::Rgit commands.
 
 =head1 VERSION
 
-Version 0.05
+Version 0.06
 
 =cut
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 =head1 DESCRIPTION
 
@@ -80,6 +80,9 @@ sub action {
 
 =head2 C<report $conf, $repo, $status>
 
+Reports that the execution of the command in C<$repo> exited with C<$status> to the current command's policy.
+Returns what the policy callback returned, which should be one of the policy codes listed in C<App::Rgit::Utils>.
+
 =cut
 
 sub report {
@@ -126,7 +129,7 @@ You can find documentation for this module with the perldoc command.
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2008 Vincent Pit, all rights reserved.
+Copyright 2008-2009 Vincent Pit, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 
