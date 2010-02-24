@@ -3,17 +3,17 @@
 use strict;
 use warnings;
 
-use Carp qw/croak/;
+use Carp   qw/croak/;
 use Config qw/%Config/;
-use Cwd qw/cwd/;
-use File::Spec::Functions qw/catfile path/;
+use Cwd    qw/cwd/;
 
-use App::Rgit::Utils qw/:codes :levels/;
 use App::Rgit;
+use App::Rgit::Utils qw/:levels/;
+use App::Rgit::Policy;
 
 our $VERSION;
 BEGIN {
- $VERSION = '0.06';
+ $VERSION = '0.07';
 }
 
 my %opts;
@@ -28,103 +28,33 @@ BEGIN {
  $cmd = ' ' unless defined $cmd;
 }
 
-my $shell;
+my $policy;
 
-BEGIN {
- if (-t && $opts{I}) {
-  if (eval "require Term::ReadKey; 1") {
-   Term::ReadKey->import;
-   *policy = \&policy_interactive;
-   for (grep defined, $ENV{SHELL}, '/bin/sh') {
-    if (-x $_) {
-     $shell = $_;
-     last;
-    }
-   }
-  } else {
-   warn "You have to install Term::ReadKey to use the interactive mode.\n";
-  }
- }
- *policy = $opts{K} ? \&policy_keep
-                    : \&policy_default
-           unless defined *policy{CODE};
+if (-t && $opts{I}) {
+ $policy = 'Interactive';
+} elsif ($opts{K}) {
+ $policy = 'Keep';
+}
+$policy = eval { App::Rgit::Policy->new(policy => $policy) };
+if (not defined $policy) {
+ print STDERR $@ if $@;
+ $policy = App::Rgit::Policy->new(policy => 'Default');
 }
 
 setpgrp 0, 0 if $Config{d_setpgrp};
 
-my $git = $ENV{GIT_EXEC_PATH};
-unless (defined $git) {
- for (path) {
-  my $g = catfile $_, 'git';
-  if (-x $g) {
-   $git = $g;
-   last;
-  }
- }
-}
-croak "Couldn't find any valid git executable" unless defined $git;
-
-my $root = $ENV{GIT_DIR};
-$root = cwd unless defined $root;
-
 my $ar = App::Rgit->new(
- git    => $git,
- root   => $root,
+ git    => undef, # Autodiscovery
+ root   => undef, # Autodiscovery
  cmd    => $cmd,
  args   => \@ARGV,
- policy => \&policy,
+ policy => $policy,
  debug  => $opts{D} ? INFO : WARN,
 );
 
 print STDOUT "rgit $VERSION\n" if $opts{V};
 
 exit $ar->run;
-
-sub policy_default {
- my ($cmd, $conf, $repo, $status, $signal) = @_;
- return NEXT unless $status;
- return LAST;
-}
-
-sub policy_keep { NEXT }
-
-sub policy_interactive {
- my ($cmd, $conf, $repo, $status, $signal) = @_;
- return NEXT unless $status;
- my %codes = (
-  'a' => [ LAST,        'aborting' ],
-  'i' => [ NEXT,        'ignoring' ],
-  'I' => [ NEXT | SAVE, 'ignoring all' ],
-  'r' => [ REDO,        'retrying' ],
- );
- my $int = { GetControlChars() }->{INTERRUPT};
- while (1) {
-  $conf->warn("[a]bort, [i]gnore, [I]gnore all, [r]etry, open [s]hell ?");
-  ReadMode(4);
-  my $key = ReadKey(0);
-  ReadMode(1);
-  print STDERR "\n";
-  next unless defined $key;
-  if ($key eq $int) {
-   $conf->warn("Interrupted, aborting\n");
-   return LAST;
-  } elsif ($key eq 's') {
-   if (defined $shell) {
-    $conf->info('Opening shell in ', $repo->work, "\n");
-    my $cwd = cwd;
-    $repo->chdir;
-    system { $shell } $shell;
-    chdir $cwd;
-   } else {
-    $conf->err("Couldn't find any shell\n");
-   }
-  } elsif (exists $codes{$key}) {
-   my $code = $codes{$key};
-   $conf->info('Okay, ', $code->[1], "\n");
-   return $code->[0];
-  }
- }
-}
 
 __END__
 
@@ -134,7 +64,7 @@ rgit - Recursively execute a command on all the git repositories in a directory 
 
 =head1 VERSION
 
-Version 0.06
+Version 0.07
 
 =head1 SYNOPSIS
 
@@ -143,6 +73,8 @@ Version 0.06
 =head1 DESCRIPTION
 
 This utility recursively searches in a root directory (which may be the current working directory or - if it has been set - the directory given by the C<GIT_DIR> environment variable) for all git repositories, sort this list by the repository path, C<chdir> into each of them, and executes the specified git command.
+For efficiency reasons, repositories located inside a bare repository or under the F<.git> directory of a work repository won't be searched for.
+
 Moreover, those formats are substituted in the arguments before running the command :
 
 =over 4
@@ -243,9 +175,7 @@ Add a remote to all repositories in "/foo/bar" to their bare counterpart in C<qu
 
 =head1 DEPENDENCIES
 
-The core modules L<Carp>, L<Config>, L<Cwd>, L<Exporter>, L<File::Find>, L<File::Spec::Functions> and L<POSIX>.
-
-L<Object::Tiny>.
+The core modules L<Carp>, L<Config>, L<Cwd>, L<Exporter>, L<File::Find>, L<File::Spec> and L<POSIX>.
 
 =head1 AUTHOR
 
@@ -255,7 +185,8 @@ You can contact me by mail or on C<irc.perl.org> (vincent).
 
 =head1 BUGS
 
-Please report any bugs or feature requests to C<bug-rgit at rt.cpan.org>, or through the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=rgit>.  I will be notified, and then you'll automatically be notified of progress on your bug as I make changes.
+Please report any bugs or feature requests to C<bug-rgit at rt.cpan.org>, or through the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=rgit>.
+I will be notified, and then you'll automatically be notified of progress on your bug as I make changes.
 
 =head1 SUPPORT
 
@@ -267,7 +198,7 @@ Tests code coverage report is available at L<http://www.profvince.com/perl/cover
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2008-2009 Vincent Pit, all rights reserved.
+Copyright 2008,2009,2010 Vincent Pit, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 

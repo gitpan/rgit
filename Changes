@@ -1,5 +1,20 @@
 Revision history for rgit
 
+0.07    2010-02-24 19:25 UTC
+        + Chg : Policies earned their own set of classes under the
+                App::Rgit::Policy namespace.
+        + Chg : Object::Tiny is no longer a dependency.
+        + Chg : The module now depends on File::Spec in spite of
+                File::Spec::Functions.
+        + Chg : Also try to append .exe, .com and .cmd to the end of the git
+                path on Win32.
+        + Fix : rgit used to run the command in "/path/foo.git" when the root
+                directory was named "/path/foo/".
+        + Fix : Work around Kwalitee test misfailures.
+        + Opt : The .git directories won't be searched for another repositories
+                anymore.
+        + Tst : Skip tests when the mock git executable can't be run.
+
 0.06    2009-01-04 15:35 UTC
         + Chg : INCOMPATIBLE CHANGE : since ^ is actually an escape character
                 for cmd.exe, and that there's no good universal escape

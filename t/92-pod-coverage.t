@@ -16,4 +16,26 @@ my $min_pc = 0.18;
 eval "use Pod::Coverage $min_pc";
 plan skip_all => "Pod::Coverage $min_pc required for testing POD coverage" if $@;
 
-all_pod_coverage_ok();
+my $trustparents = { coverage_class => 'Pod::Coverage::CountParents' };
+
+plan tests => 13;
+
+pod_coverage_ok('App::Rgit');
+
+pod_coverage_ok('App::Rgit::Command');
+pod_coverage_ok('App::Rgit::Command::Each', $trustparents);
+pod_coverage_ok('App::Rgit::Command::Once', $trustparents);
+
+pod_coverage_ok('App::Rgit::Config');
+pod_coverage_ok('App::Rgit::Config::Default', $trustparents);
+
+pod_coverage_ok('App::Rgit::Guard');
+
+pod_coverage_ok('App::Rgit::Policy');
+pod_coverage_ok('App::Rgit::Policy::Default',     $trustparents);
+pod_coverage_ok('App::Rgit::Policy::Interactive', $trustparents);
+pod_coverage_ok('App::Rgit::Policy::Keep',        $trustparents);
+
+pod_coverage_ok('App::Rgit::Repository');
+
+pod_coverage_ok('App::Rgit::Utils');

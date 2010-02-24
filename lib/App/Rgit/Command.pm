@@ -3,11 +3,9 @@ package App::Rgit::Command;
 use strict;
 use warnings;
 
-use Carp qw/croak/;
+use Carp ();
 
-use Object::Tiny qw/cmd args policy/;
-
-use App::Rgit::Utils qw/validate :codes/;
+use App::Rgit::Utils qw/:codes/;
 
 =head1 NAME
 
@@ -15,11 +13,11 @@ App::Rgit::Command - Base class for App::Rgit commands.
 
 =head1 VERSION
 
-Version 0.06
+Version 0.07
 
 =cut
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 =head1 DESCRIPTION
 
@@ -39,22 +37,30 @@ my %commands;
 __PACKAGE__->action($_ => 'Once') for qw/daemon gui help init version/, ' ';
 
 sub new {
- my ($class, %args) = &validate;
+ my $class = shift;
+ $class = ref $class || $class;
+
+ my %args = @_;
+
  my $cmd = $args{cmd};
  $cmd = ' ' unless defined $cmd;
+
  my $action = $class->action($cmd);
+
  if ($class eq __PACKAGE__) {
   $class = $action;
  } else {
-  croak "Command $cmd should be executed as a $action"
-                               unless $class->isa($action);
+  Carp::confess("Command $cmd should be executed as a $action")
+                                                    unless $class->isa($action);
  }
- eval "require $action; 1" or croak "Couldn't load $action: $@";
- $class->SUPER::new(
+
+ eval "require $action; 1" or Carp::confess("Couldn't load $action: $@");
+
+ bless {
   cmd    => $cmd,
   args   => $args{args} || [ ],
   policy => $args{policy},
- );
+ }, $class;
 }
 
 =head2 C<< action $cmd [ => $pkg ] >>
@@ -81,15 +87,15 @@ sub action {
 =head2 C<report $conf, $repo, $status>
 
 Reports that the execution of the command in C<$repo> exited with C<$status> to the current command's policy.
-Returns what the policy callback returned, which should be one of the policy codes listed in C<App::Rgit::Utils>.
+Returns what policy C<report> method returned, which should be one of the policy codes listed in C<App::Rgit::Utils>.
 
 =cut
 
 sub report {
  my ($self) = @_;
- my $cb = $self->policy;
- return $_[3] ? LAST : NEXT unless $cb;
- my $code = $cb->(@_);
+
+ my $code = $self->policy->handle(@_);
+
  return defined $code ? $code : NEXT;
 }
 
@@ -99,7 +105,13 @@ sub report {
 
 =head2 C<policy>
 
-Accessors.
+Read-only accessors.
+
+=cut
+
+BEGIN {
+ eval "sub $_ { \$_[0]->{$_} }" for qw/cmd args policy/;
+}
 
 =head2 C<run $conf>
 
@@ -114,12 +126,13 @@ L<rgit>.
 =head1 AUTHOR
 
 Vincent Pit, C<< <perl at profvince.com> >>, L<http://profvince.com>.
-   
+
 You can contact me by mail or on C<irc.perl.org> (vincent).
 
 =head1 BUGS
 
-Please report any bugs or feature requests to C<bug-rgit at rt.cpan.org>, or through the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=rgit>.  I will be notified, and then you'll automatically be notified of progress on your bug as I make changes.
+Please report any bugs or feature requests to C<bug-rgit at rt.cpan.org>, or through the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=rgit>.
+I will be notified, and then you'll automatically be notified of progress on your bug as I make changes.
 
 =head1 SUPPORT
 
@@ -129,7 +142,7 @@ You can find documentation for this module with the perldoc command.
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2008-2009 Vincent Pit, all rights reserved.
+Copyright 2008,2009,2010 Vincent Pit, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 

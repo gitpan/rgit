@@ -3,23 +3,21 @@ package App::Rgit::Utils;
 use strict;
 use warnings;
 
-use Carp qw/croak/;
-
 =head1 NAME
 
-App::Rgit::Utils - Miscellanous utilities for App::Rgit classes.
+App::Rgit::Utils - Miscellaneous utilities for App::Rgit classes.
 
 =head1 VERSION
 
-Version 0.06
+Version 0.07
 
 =cut
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 =head1 DESCRIPTION
 
-Miscellanous utilities for L<App::Rgit> classes.
+Miscellaneous utilities for L<App::Rgit> classes.
 
 This is an internal module to L<rgit>.
 
@@ -51,25 +49,7 @@ use constant {
  CRIT => 0,
 };
 
-=head1 FUNCTIONS
-
-=head2 C<validate @method_args>
-
-Sanitize arguments passed to methods.
-
-=cut
-
-sub validate {
- my $class = shift;
- croak 'Optional arguments must be passed as key/value pairs' if @_ % 2;
- $class = ref($class) || $class;
- $class = caller unless $class;
- return $class, @_;
-}
-
 =head1 EXPORT
-
-C<validate> is only exported on request, either by its name or by the C<'funcs'> tag.
 
 C<NEXT> C<REDO>, C<LAST> and C<SAVE> are only exported on request, either by their name or by the C<'codes'> tags.
 
@@ -81,7 +61,6 @@ use base qw/Exporter/;
 
 our @EXPORT         = ();
 our %EXPORT_TAGS    = (
- funcs  => [ qw/validate/ ],
  codes  => [ qw/SAVE NEXT REDO LAST/ ],
  levels => [ qw/INFO WARN ERR CRIT/ ],
 );
@@ -95,12 +74,13 @@ L<rgit>.
 =head1 AUTHOR
 
 Vincent Pit, C<< <perl at profvince.com> >>, L<http://profvince.com>.
-   
+
 You can contact me by mail or on C<irc.perl.org> (vincent).
 
 =head1 BUGS
 
-Please report any bugs or feature requests to C<bug-rgit at rt.cpan.org>, or through the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=rgit>.  I will be notified, and then you'll automatically be notified of progress on your bug as I make changes.
+Please report any bugs or feature requests to C<bug-rgit at rt.cpan.org>, or through the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=rgit>.
+I will be notified, and then you'll automatically be notified of progress on your bug as I make changes.
 
 =head1 SUPPORT
 
@@ -110,7 +90,7 @@ You can find documentation for this module with the perldoc command.
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2008-2009 Vincent Pit, all rights reserved.
+Copyright 2008,2009,2010 Vincent Pit, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 

@@ -3,14 +3,12 @@ package App::Rgit::Config;
 use strict;
 use warnings;
 
-use Carp qw/croak/;
-use Cwd qw/abs_path/;
-use File::Spec::Functions qw/file_name_is_absolute/;
-
-use Object::Tiny qw/root git cwd_repo debug/;
+use Carp       (); # confess
+use Cwd        (); # cwd, abs_path
+use File::Spec (); # canonpath, catfile, path
 
 use App::Rgit::Repository;
-use App::Rgit::Utils qw/validate :levels/;
+use App::Rgit::Utils qw/:levels/;
 
 use constant IS_WIN32 => $^O eq 'MSWin32';
 
@@ -20,11 +18,11 @@ App::Rgit::Config - Base class for App::Rgit configurations.
 
 =head1 VERSION
 
-Version 0.06
+Version 0.07
 
 =cut
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 =head1 DESCRIPTION
 
@@ -41,35 +39,55 @@ Creates a new configuration object based on the root directory C<$root> and usin
 =cut
 
 sub new {
- my ($class, %args) = &validate;
+ my $class = shift;
+ $class = ref $class || $class;
 
- my $root = $args{root};
- return unless defined $root and -d $root;
- $root = abs_path $root unless file_name_is_absolute $root;
+ my %args = @_;
 
- my $git = $args{git};
- return unless defined $git;
+ my $root = defined $args{root}
+              ? $args{root}
+              : defined $ENV{GIT_DIR}
+                  ? $ENV{GIT_DIR}
+                  : Cwd::cwd;
+ Carp::confess("Invalid root directory") unless -d $root;
+ $root = File::Spec->canonpath(Cwd::abs_path($root));
+
+ my $git;
+ my @candidates = (
+  defined $args{git}
+    ? $args{git}
+    : defined $ENV{GIT_EXEC_PATH}
+        ? $ENV{GIT_EXEC_PATH}
+        : map File::Spec->catfile($_, 'git'), File::Spec->path
+ );
  if (IS_WIN32) {
-  unless (-x $git) {
-   $git .= '.bat';
-   return unless -x $git;
+  my @acc;
+  for my $c (@candidates) {
+   push @acc, $c, map "$c.$_", qw/exe com bat cmd/;
   }
- } else {
-  return unless -x $git;
+  @candidates = @acc;
  }
+ for my $c (@candidates) {
+  if (-x $c) {
+   $git = $c;
+   last;
+  }
+ }
+ Carp::confess("Couldn't find a proper git executable") unless defined $git;
+ $git = File::Spec->canonpath(Cwd::abs_path($git));
 
  my $conf = 'App::Rgit::Config::Default';
- eval "require $conf; 1" or croak "Couldn't load $conf: $@";
+ eval "require $conf; 1" or Carp::confess("Couldn't load $conf: $@");
 
  my $r = App::Rgit::Repository->new(fake => 1);
  return unless defined $r;
 
- $conf->SUPER::new(
+ bless {
   root     => $root,
   git      => $git,
   cwd_repo => $r,
   debug    => defined $args{debug} ? int $args{debug} : WARN,
- );
+ }, $conf;
 }
 
 =head2 C<info $msg>
@@ -112,7 +130,13 @@ sub crit { shift->_notify(CRIT, @_) }
 
 =head2 C<debug>
 
-Accessors.
+Read-only accessors.
+
+=cut
+
+BEGIN {
+ eval "sub $_ { \$_[0]->{$_} }" for qw/root git cwd_repo debug/;
+}
 
 =head1 SEE ALSO
 
@@ -121,12 +145,13 @@ L<rgit>.
 =head1 AUTHOR
 
 Vincent Pit, C<< <perl at profvince.com> >>, L<http://profvince.com>.
-   
+
 You can contact me by mail or on C<irc.perl.org> (vincent).
 
 =head1 BUGS
 
-Please report any bugs or feature requests to C<bug-rgit at rt.cpan.org>, or through the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=rgit>.  I will be notified, and then you'll automatically be notified of progress on your bug as I make changes.
+Please report any bugs or feature requests to C<bug-rgit at rt.cpan.org>, or through the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=rgit>.
+I will be notified, and then you'll automatically be notified of progress on your bug as I make changes.
 
 =head1 SUPPORT
 
@@ -136,7 +161,7 @@ You can find documentation for this module with the perldoc command.
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2008-2009 Vincent Pit, all rights reserved.
+Copyright 2008,2009,2010 Vincent Pit, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 

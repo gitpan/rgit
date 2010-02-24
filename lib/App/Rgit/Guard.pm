@@ -1,13 +1,11 @@
-package App::Rgit::Command::Once;
+package App::Rgit::Guard;
 
 use strict;
 use warnings;
 
-use base qw/App::Rgit::Command/;
-
 =head1 NAME
 
-App::Rgit::Command::Once - Class for commands to execute only once.
+App::Rgit::Guard - Scope guard helper for App::Rgit.
 
 =head1 VERSION
 
@@ -19,31 +17,36 @@ our $VERSION = '0.07';
 
 =head1 DESCRIPTION
 
-Class for commands to execute only once.
+This class implements a simple scope guard object.
 
-This is an internal class to L<rgit>.
+This is an internal module to L<rgit>.
 
 =head1 METHODS
 
-This class inherits from L<App::Rgit::Command>.
+=head2 C<new $callback>
 
-It implements :
-
-=head2 C<run>
+Creates a new C<App::Rgit::Guard> object that will call C<$callback> when it is destroyed.
 
 =cut
 
-sub run {
- my ($self, $conf) = @_;
+sub new {
+ my $class = shift;
+ $class = ref $class || $class;
 
- $conf->cwd_repo->run($conf, @{$self->args});
+ bless \($_[0]), $class;
 }
+
+=head2 C<DESTROY>
+
+Invokes the callback when the guard object goes out of scope.
+
+=cut
+
+sub DESTROY { ${$_[0]}->() }
 
 =head1 SEE ALSO
 
 L<rgit>.
-
-L<App::Rgit::Command>.
 
 =head1 AUTHOR
 
@@ -60,7 +63,7 @@ I will be notified, and then you'll automatically be notified of progress on you
 
 You can find documentation for this module with the perldoc command.
 
-    perldoc App::Rgit::Command::Once
+    perldoc App::Rgit::Guard
 
 =head1 COPYRIGHT & LICENSE
 
@@ -70,4 +73,4 @@ This program is free software; you can redistribute it and/or modify it under th
 
 =cut
 
-1; # End of App::Rgit::Command::Once
+1; # End of App::Rgit::Guard

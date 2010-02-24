@@ -1,17 +1,15 @@
-package App::Rgit::Config::Default;
+package App::Rgit::Policy::Keep;
 
 use strict;
 use warnings;
 
-use File::Find qw/find/;
+use App::Rgit::Utils qw/:codes/;
 
-use base qw/App::Rgit::Config/;
-
-use App::Rgit::Repository;
+use base qw/App::Rgit::Policy/;
 
 =head1 NAME
 
-App::Rgit::Config::Default - Default App::Rgit configuration class.
+App::Rgit::Policy::Keep - A policy that ignores errors.
 
 =head1 VERSION
 
@@ -23,44 +21,25 @@ our $VERSION = '0.07';
 
 =head1 DESCRIPTION
 
-Default L<App::Rgit> configuration class.
-
-This is an internal class to L<rgit>.
+This policy always proceed to the next repository even when an error occurs.
 
 =head1 METHODS
 
-This class inherits from L<App::Rgit::Config>.
+This class inherits from L<App::Rgit::Policy>.
 
 It implements :
 
-=head2 C<repos>
+=head2 C<handle>
 
 =cut
 
-sub repos {
- my $self = shift;
- return $self->{repos} if defined $self->{repos};
- my %repos;
- find {
-  wanted => sub {
-   return if m{(?:^|/)\.\.?$}
-          or not (-d $_ and -r _);
-   if (my $r = App::Rgit::Repository->new(dir => $_)) {
-    $File::Find::prune = 1;
-    $repos{$r->repo} = $r unless exists $repos{$r->repo};
-   }
-  },
-  follow   => 1,
-  no_chdir => 1,
- }, $self->root;
- $self->{repos} = [ sort { $a->repo cmp $b->repo } values %repos ];
-}
+sub handle { NEXT }
 
 =head1 SEE ALSO
 
 L<rgit>.
 
-L<App::Rgit::Config>.
+L<App::Rgit::Policy>.
 
 =head1 AUTHOR
 
@@ -77,7 +56,7 @@ I will be notified, and then you'll automatically be notified of progress on you
 
 You can find documentation for this module with the perldoc command.
 
-    perldoc App::Rgit::Command::Default
+    perldoc App::Rgit::Policy::Keep
 
 =head1 COPYRIGHT & LICENSE
 
@@ -87,4 +66,4 @@ This program is free software; you can redistribute it and/or modify it under th
 
 =cut
 
-1; # End of App::Rgit::Command::Default
+1; # End of App::Rgit::Policy::Keep
