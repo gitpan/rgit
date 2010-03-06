@@ -3,23 +3,49 @@ package App::Rgit::Utils;
 use strict;
 use warnings;
 
+use Cwd        (); # abs_path
+use File::Spec (); # file_name_is_absolute, updir, splitdir, splitpath
+
 =head1 NAME
 
 App::Rgit::Utils - Miscellaneous utilities for App::Rgit classes.
 
 =head1 VERSION
 
-Version 0.07
+Version 0.08
 
 =cut
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 =head1 DESCRIPTION
 
 Miscellaneous utilities for L<App::Rgit> classes.
 
 This is an internal module to L<rgit>.
+
+=head1 FUNCTIONS
+
+=head2 C<abs_path $path>
+
+Forcefully make a path C<$path> absolute (in L<Cwd/abs_path>'s meaning of the term) when it isn't already absolute or when it contains C<'..'>.
+
+=cut
+
+sub abs_path {
+ my ($path) = @_;
+
+ if (File::Spec->file_name_is_absolute($path)) {
+  my $updir  = File::Spec->updir;
+  my @chunks = File::Spec->splitdir((File::Spec->splitpath($path))[1]);
+
+  unless (grep $_ eq $updir, @chunks) {
+   return $path;
+  }
+ }
+
+ return Cwd::abs_path($path);
+}
 
 =head1 CONSTANTS
 
@@ -51,6 +77,8 @@ use constant {
 
 =head1 EXPORT
 
+L<abs_path> is only exported on request.
+
 C<NEXT> C<REDO>, C<LAST> and C<SAVE> are only exported on request, either by their name or by the C<'codes'> tags.
 
 C<INFO>, C<WARN>, C<ERR> and C<CRIT> are only exported on request, either by their name or by the C<'levels'> tags.
@@ -61,6 +89,7 @@ use base qw/Exporter/;
 
 our @EXPORT         = ();
 our %EXPORT_TAGS    = (
+ funcs  => [ qw/abs_path/ ],
  codes  => [ qw/SAVE NEXT REDO LAST/ ],
  levels => [ qw/INFO WARN ERR CRIT/ ],
 );

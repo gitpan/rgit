@@ -3,7 +3,7 @@ NAME
     directory tree.
 
 VERSION
-    Version 0.07
+    Version 0.08
 
 SYNOPSIS
         rgit [-K|-I|-D|-V] [GIT_OPTIONS] COMMAND [COMMAND_ARGS]

@@ -1,5 +1,9 @@
 Revision history for rgit
 
+0.08    2010-03-06 00:00 UTC
+        + Fix : Only apply abs_path() to paths that are either relative or that
+                contains '..'. This should fix test failures on Mac OS X.
+
 0.07    2010-02-24 19:25 UTC
         + Chg : Policies earned their own set of classes under the
                 App::Rgit::Policy namespace.

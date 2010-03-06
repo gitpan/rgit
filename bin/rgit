@@ -13,7 +13,7 @@ use App::Rgit::Policy;
 
 our $VERSION;
 BEGIN {
- $VERSION = '0.07';
+ $VERSION = '0.08';
 }
 
 my %opts;
@@ -64,7 +64,7 @@ rgit - Recursively execute a command on all the git repositories in a directory 
 
 =head1 VERSION
 
-Version 0.07
+Version 0.08
 
 =head1 SYNOPSIS
 

@@ -4,11 +4,11 @@ use strict;
 use warnings;
 
 use Carp       (); # confess
-use Cwd        (); # cwd, abs_path
+use Cwd        (); # cwd
 use File::Spec (); # canonpath, catfile, path
 
 use App::Rgit::Repository;
-use App::Rgit::Utils qw/:levels/;
+use App::Rgit::Utils qw/:levels/; # :levels, abs_path
 
 use constant IS_WIN32 => $^O eq 'MSWin32';
 
@@ -18,11 +18,11 @@ App::Rgit::Config - Base class for App::Rgit configurations.
 
 =head1 VERSION
 
-Version 0.07
+Version 0.08
 
 =cut
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 =head1 DESCRIPTION
 
@@ -50,7 +50,7 @@ sub new {
                   ? $ENV{GIT_DIR}
                   : Cwd::cwd;
  Carp::confess("Invalid root directory") unless -d $root;
- $root = File::Spec->canonpath(Cwd::abs_path($root));
+ $root = File::Spec->canonpath(App::Rgit::Utils::abs_path($root));
 
  my $git;
  my @candidates = (
@@ -74,7 +74,7 @@ sub new {
   }
  }
  Carp::confess("Couldn't find a proper git executable") unless defined $git;
- $git = File::Spec->canonpath(Cwd::abs_path($git));
+ $git = File::Spec->canonpath(App::Rgit::Utils::abs_path($git));
 
  my $conf = 'App::Rgit::Config::Default';
  eval "require $conf; 1" or Carp::confess("Couldn't load $conf: $@");

@@ -3,9 +3,11 @@ package App::Rgit::Repository;
 use strict;
 use warnings;
 
-use Cwd        (); # cwd, abs_path
+use Cwd        (); # cwd
 use File::Spec (); # canonpath, catdir, splitdir, abs2rel
 use POSIX      (); # WIFEXITED WEXITSTATUS WIFSIGNALED WTERMSIG SIGINT SIGQUIT
+
+use App::Rgit::Utils (); # abs_path
 
 my ($WIFEXITED, $WEXITSTATUS, $WIFSIGNALED, $WTERMSIG);
 
@@ -26,11 +28,11 @@ App::Rgit::Repository - Class representing a Git repository.
 
 =head1 VERSION
 
-Version 0.07
+Version 0.08
 
 =cut
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 =head1 DESCRIPTION
 
@@ -55,7 +57,7 @@ sub new {
 
  my $dir = $args{dir};
  if (defined $dir) {
-  $dir = Cwd::abs_path($dir);
+  $dir = App::Rgit::Utils::abs_path($dir);
  } else {
   $dir = Cwd::cwd;
  }

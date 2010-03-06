@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               rgit
-version:            0.07
+version:            0.08
 abstract:           Recursively execute a command on all the git repositories in a directory tree.
 author:
     - Vincent Pit <perl@profvince.com>
